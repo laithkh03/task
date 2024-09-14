@@ -19,7 +19,7 @@ class AuthController extends BaseController {
 
     public function anotherTest() {
         echo "This is another test page!";
-        die;  // Stop script execution after displaying the message
+        die;
     }
 
     public function register() {
