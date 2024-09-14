@@ -30,7 +30,7 @@ class AuthFilter implements FilterInterface {
         try {
             $decoded = JWT::decode(
                 $token,
-                new Key($this->secret_key, 'HS256')  // Ensure this is an array
+                new Key($this->secret_key, 'HS256') 
             );
         } catch (\Exception $e) {
             return Services::response()->setStatusCode(401, 'Unauthorized');
