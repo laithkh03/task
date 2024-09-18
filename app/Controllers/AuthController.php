@@ -50,6 +50,7 @@ class AuthController extends BaseController {
         try {
             // Attempt to save the user data in the database
             if (!$userModel->save($data)) {
+          
                 // If saving fails, return a 500 Internal Server Error response
                 return $this->response->setJSON([
                     'status' => 'error',
@@ -63,11 +64,26 @@ class AuthController extends BaseController {
                 'message' => 'An error occurred during registration: ' . $e->getMessage()
             ])->setStatusCode(500);  // 500 Internal Server Error
         }
-
+        try {
+            // Encode the user's ID and username in the JWT token
+            $userId = $userModel->getInsertID();
+            $token = JWT::encode(
+                ['id' => $userId , 'username' =>$this->request->getVar('username')],
+                $this->secret_key,  // Use the secret key to sign the token
+                'HS256'  // Specify the hashing algorithm
+            );
+        } catch (\Exception $e) {
+            // If token generation fails, return a 500 Internal Server Error response
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'Token generation failed: ' . $e->getMessage()
+            ])->setStatusCode(500);  // 500 Internal Server Error
+        }
         // If registration is successful, return a 201 Created response
         return $this->response->setJSON([
             'status' => 'success',
-            'message' => 'User registered successfully'
+            'message' => 'User registered successfully',
+            'token'=>$token 
         ])->setStatusCode(201);  // 201 Created
     }
 
@@ -80,6 +96,13 @@ class AuthController extends BaseController {
         // Fetch the user data from the database by username
         $user = $userModel->where('username', $username)->first();
 
+        if (!password_verify($password, $user['password'])) {
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'Invalid credentials'
+            ])->setStatusCode(401); 
+        }
+        
         // Generate a JWT token upon successful login
         try {
             // Encode the user's ID and username in the JWT token
